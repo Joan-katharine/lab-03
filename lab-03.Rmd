@@ -1,162 +1,245 @@
 ---
-title: "Lab 03 - Take a sad plot and make it better"
-author: "User1, User2, User3, User4, User5 and User6 - Team Name"
+title: "Lab 03 – Critical Use of GenAI for Data Science"
+author: "Team Name: User1, User2, User3, User4"
 date: "`r Sys.Date()`"
 output: html_document
 ---
 
-### Load packages
-
-```{r load-packages, message = FALSE, warning=FALSE}
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(nycflights13)
 library(tidyverse)
 library(ggplot2)
+library(infer)
 ```
 
+_Note, if nycflights13 in not installed in your system, RStudio might prompt you to install it, or simply run `install.packages("nycflights13")` in the console._
 
-# Questioning data visualisations
+# 1. Data Structure Summary & Initial Exploration
 
-## Image 1
+## 1.1 Subset the Data
 
-```{r echo=FALSE, out.width="100%"}
-knitr::include_graphics("img/Speaking-the-world.jpg")
+**Write code to create the subset `jan_feb_flights` below:**
+
+```{r subset-data}
+jan_feb_flights <- flights %>%
+  filter(month %in% c(1, 2))
 ```
 
-_Write your comments about image 1 below_
+## 1.2 Column Overview
 
+Explore the columns in `jan_feb_flights`.
+Which are numeric, which are categorical/text/factor?  
+Are there missing values?
 
-
-
-
-## Image 2
-
-```{r echo=FALSE, out.width="100%"}
-knitr::include_graphics("img/rose-pop-density-total-area-bw.jpg")
-```
-
-_Write your comments about image 2 below_
-
-
-
-
-## Image 3
-
-```{r echo=FALSE, out.width="100%"}
-knitr::include_graphics("img/life-expectancy-rule-of-law.png")
-```
-
-_Write your comments about image 3 below_
-
-
-
-
-## Image 4
-
-```{r echo=FALSE, out.width="100%"}
-knitr::include_graphics("img/global-income-dist.PNG")
-```
-
-_Write your comments about image 4 below_
-
-
-
-
-
-# Exercises
-
-```{r load-data-staff, message=FALSE, eval=TRUE}
-staff <- read_csv("data/instructional-staff.csv")
-```
-
-
-## Exercise 1
-
-What is the difference between *wide format* data and *long format* data?
-
-
-Is the format `staff` data *wide* or *long*?
-
-
-How many observations are there in the data set?
-
-
-
-
-## Exercise 2
-
-```{r pivoting}
-## Uncomment and complete the following code
-
-#staff_long <- ___ %>%
-#  ___(
-#    cols = ____, 
-#    names_to = "_____",
-#    values_to = "percent"
-#    )
+```{r}
+# explore the types of the columns in jan_feb_flights
 
 ```
 
+```{r}
+# which columns are integer
 
-## Exercise 3
 
-```{r dot-plot}
-# Write your code for Exercise 3 here
+# which columns are double
+
+
+# which columns are character
+
+
+```
+
+```{r}
+# which columns contain NA's
+
+```
+
+**Summary:**  
+
+_Use this space to summarize what you attempted, either from your own exploration or an AI explanation._
+
+## 1.3 Reflection
+
+Did the GenAI explanation (if used) help you? What was clear or unclear from the GenAI explanation? Did it make any errors or skip anything important? Did you have to fact-check? Did you need to provide follow-up prompts or clarifications? Was the first response sufficient?
+
+_Your answer here_
+
+---
+
+# 2. Delays & Weather
+
+**Goal:** Analyze relationship between average departure delay and wind gust speed.
+
+## 2.1 Code
+
+```{r eval=FALSE} 
+## REMEMBER TO SET eval=TRUE
+
+# join the datasets
+jan_feb_flights <- jan_feb_flights %>%
+  ____________(weather, by = c(______________________)) 
+```
+
+```{r}
+# is there a difference in wind speed when wind_gust is missing vs not missing?
 
 
 
 ```
 
-## Exercise 4
+Describe the difference in wind speed when wind_gust is missing vs not missing:
 
-```{r bad-line-plot}
-# Write your code for Exercise 4 here
+_Your answer here_
+
+```{r eval=FALSE} 
+## REMEMBER TO SET eval=TRUE
+
+# create a new variable, gust_present
+jan_feb_flights <- jan_feb_flights %>%
+  mutate(gust_present = _______________)
+```
+
+
+```{r}
+# is there a relationship between gust_present and dep_delay?
+
+
+```
+
+Describe the relationship between gust_present and dep_delay you see (if any).
+
+_Your answer here_
+
+## 2.1 Reflection
+
+Was GenAI helpful as a navigator? Did it ask you questions to guide your thinking? Is there anything you could learn from this to be a better navigator, next time we will work in pairs?
+
+_Your answer here_
+
+---
+
+# 3. Bootstrap confidence intervals
+
+## 3.1 Bootstrap CI using `infer`
+
+```{r}
+# focus on flights departing from JFK with non-missing dep_delay
+jfk_flights <- jan_feb_flights %>%
+ filter(origin == "JFK", !is.na(dep_delay))
+```
+
+
+```{r eval=FALSE} 
+## REMEMBER TO SET eval=TRUE
+
+# Compute the sample mean
+mean_dep_delay <- jfk_flights %>% ________(mean_jfk = mean(dep_delay)) %>% pull(mean_jfk)
+
+# Construct bootstrap distribution
+set.seed(99)  # for reproducibility
+boot_dist <- jfk_flights %>%
+  ________(response = _________) %>%
+  ________(reps = 1500, type = "bootstrap") %>%
+  ________(stat = _______)                 
+
+# Compute 95% confidence interval (percentile method)
+boot_dist %>% ...
+
+```
+
+**Interpretation for the confidence interval**:
+
+_Your answer here_
+
+## 3.2 Using base R
+
+The following code achieves the same using base R and a for loop. 
+Ask GenAI to explain how it works and discuss it with the group. Then find a tutor, and try to explain them what you did or didn't understand.
+
+
+```{r eval=FALSE} 
+## REMEMBER TO SET eval=TRUE
+
+set.seed(99)
+n <- nrow(jfk_flights)
+B <- 1500       
+boot_means2 <- numeric(B)
+
+for (i in 1:B) {
+  idx <- sample(n, replace = TRUE)
+  boot_means2[i] <- mean(jfk_flights$dep_delay[idx])
+}
+
+ci2_lower <- quantile(boot_means2, 0.025)
+ci2_upper <- quantile(boot_means2, 0.975)
+
+mean_dep_delay; ci2_lower; ci2_upper
+```
+
+## 3.3 Reflection
+
+What was good and what was bad of GenAI's explanation? Did you have to clarify or re-prompt? 
+Did it match the information provided by the tutor?
+
+_Your answer here_
+
+---
+
+# 4. Airline Delay Analysis
+
+**Goal:** For each airline, what are the mean and median arrival delays in Jan/Feb? Which is the worst on average?
+
+```{r eval=FALSE} 
+## REMEMBER TO SET eval=TRUE
+
+# Join jan_feb_flights with airlines by carrier code
+jan_feb_flights <- jan_feb_flights %>%
+  ___________(airlines, by = "carrier")
+```
+
+
+```{r wrangling1}
+# Group by airline, summarize n, mean and median arrival delay
+# Arrange descending by mean delay
+
 
 
 
 ```
 
-## Exercise 5
+**Which airline(s) had the highest mean? Is there anything notable about the worst airline?**
 
-```{r mutate-year}
-## Uncomment and complete the following code
+_Your answer here_
 
-#staff_long <- staff_long %>%
-#  mutate(year = ______(year))
-```
+## 4.1 Reflection
 
+What did GenAI help with? Was anything inaccurate, missing, or did you spot any typical "AI mistakes"? Or did you instead learn something new? Did you have to clarify or re-prompt?
 
-```{r working-line-plot}
-# Write your code for Exercise 5 here
+_Your answer here_
 
+---
 
+# 5. GenAI Use Reflection
 
-```
+- Discuss with your teammates, what are the risks of using GenAI for coding? 
+- More specifically, what are the risks of copying code verbatim?
+- Discuss the differences for someone who is just learning to code (like you) versus someone who is already proficient.
+- What are your thoughts on using GenAI as a *thinking partner* or *pair-programming navigator*, rather than a code-generator?
+- What is one insight or tip each of you learned today about using GenAI productively or spotting misleading AI-generated code?
 
-## Exercise 6
+_Your answer here_
 
-```{r better-line-plot}
-# Write your code for Exercise 6 here
+---
 
+# 6. GenAI Acknowledgment
 
+_If you used AI for this lab, provide a statement like (make sure to specify which GenAI tool you used):_
 
+> I used ELM/ChatGPT/Copilot to ....
 
-```
+---
 
-## Exercise 7
+# Wrapping Up
 
-_Write below your ideas for adapting the line plot_
-
-* Idea 1
-* Idea 2
-* Idea 3
-* ...
-
-
-## Exercise 8
-
-```{r implement-Ex7}
-# Write your code for Exercise 8 here
-
-
-
-```
+_Save, commit, and push your file. Remember to acknowledge any GenAI help above._
 
