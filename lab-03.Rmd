@@ -13,6 +13,7 @@ library(ggplot2)
 library(infer)
 ```
 
+
 _Note, if nycflights13 in not installed in your system, RStudio might prompt you to install it, or simply run `install.packages("nycflights13")` in the console._
 
 # 1. Data Structure Summary & Initial Exploration
